@@ -12,7 +12,7 @@ import (
 	"preptar/internal/pdf_dejumbler"
 )
 
-func SubstringAfter(s, substr string) (string, err) {
+func SubstringAfter(s, substr string) (string, error) {
 	index := strings.Index(s, substr)
 	if index == -1 {
 		// Substring not found
