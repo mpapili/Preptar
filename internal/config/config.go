@@ -9,7 +9,6 @@ type Config struct {
 	LlamaMainPath string
 	DecoderPath   string // path to model to decode PDF nonsense
 	Prompts       *Prompts
-
 }
 
 type Prompts struct {

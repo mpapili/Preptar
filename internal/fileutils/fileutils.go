@@ -3,7 +3,6 @@ package fileutils
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -35,7 +34,7 @@ func splitString(input string) []string {
 		if end > inputLength {
 			end = inputLength
 		}
-		if end - start < 40 {
+		if end-start < 40 {
 			// probably nonsense or unusably small text
 			continue
 		}
@@ -47,7 +46,7 @@ func splitString(input string) []string {
 
 func AppendNewParagraph(filename, text string) error {
 	// Open file in append mode, or create it if it doesn't exist
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -78,7 +77,7 @@ func GatherParagraphs(filePath string) ([]string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("error during file scan: %s", err)
+		return nil, fmt.Errorf("error during file scan: %s %v", filePath, err)
 	}
 	return paragraphs, nil
 }

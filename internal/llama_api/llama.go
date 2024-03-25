@@ -2,10 +2,12 @@ package llama
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type LlamaAPIHandler struct {
@@ -47,7 +49,7 @@ func NewLlamaAPIHandler(port string) *LlamaAPIHandler {
 	}
 }
 
-func (lh *LlamaAPIHandler) MakeRequestAndDecode(prompt string, sysPrompt string, username string, botname string) (*LlamaApiResponse, error) {
+func (lh *LlamaAPIHandler) MakeRequestAndDecode(ctx context.Context, prompt string, sysPrompt string, username string, botname string) (*LlamaApiResponse, error) {
 	// Create a new request
 	requestPayload := lh.newDefaultLlamaRequest(username, botname)
 	requestPayload.Prompt = fmt.Sprintf("%s <s> %s: %s %s:", sysPrompt, username, prompt, botname)
@@ -60,17 +62,24 @@ func (lh *LlamaAPIHandler) MakeRequestAndDecode(prompt string, sysPrompt string,
 	body := bytes.NewReader(payloadBytes)
 
 	// Make the POST request
-	resp, err := http.Post(lh.URL, "application/json", body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, lh.URL, body) // bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{
+		Timeout: time.Second * 360, // TODO - configure a better timeout
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
 	// Check response status code
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
-
 	// Read and decode the response
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

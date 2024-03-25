@@ -1,0 +1,4 @@
+#! /bin/bash
+
+clear
+golangci-lint --enable=govet --enable=errcheck --enable=staticcheck --enable=unused --enable=gosimple --enable=ineffassign --enable=typecheck --enable=bodyclose --enable=revive --enable=stylecheck --enable=gosec --enable=unconvert --enable=goconst --enable=gocyclo --enable=gocognit --enable=gofmt --enable=misspell --enable=unparam --enable=dogsled --enable=nakedret --enable=exportloopref --enable=gocritic --enable=gochecknoinits --enable=gochecknoglobals --enable=godox --enable=funlen --enable=whitespace --enable=goprintffuncname --enable=asciicheck --enable=nolintlint --enable=noctx --enable=sqlclosecheck --enable=gofumpt --enable=exportloopref --enable=wastedassign --enable=nilerr --enable=predeclared --enable=makezero --enable=durationcheck --enable=forbidigo --enable=errorlint --enable=gocheckcompilerdirectives run
