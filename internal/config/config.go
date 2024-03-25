@@ -31,6 +31,9 @@ func newPrompts() *Prompts {
 		Answerer: "This is a conversation between MIKE and you, ANSWERER. MIKE will give you a paragraph with one or more " +
 		"bits of useful information and follow it up with a question. ANSWERER will respond with the answer to the question using " +
 		"the information from the provided paragraph.",
+		PeerReviewer: "This is a conversation between MIKE and a peer reviewer named REVIEWER (you) " +
+		"who is tasked with determining if MIKE's statement are safe or unsafe. If a statement is safe, "+
+		"REVIEWER will just say 'safe'. If a statement is unsafe, reviewer will just say 'unsafe'."
 	}
 }
 
