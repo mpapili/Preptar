@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const MaxParagraphSize = 1_000
+const MaxParagraphSize = 800
 
 func FileExists(filename string) bool {
 	info, err := os.Stat(filename)

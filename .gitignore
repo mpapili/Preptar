@@ -23,3 +23,6 @@ go.work
 # ignore everything from training materials directory 
 training-materials/*pdf
 training-materials/*txt
+
+# ignore results
+*ejumbled-pdf.txt

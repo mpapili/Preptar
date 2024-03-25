@@ -36,7 +36,7 @@ func (lh *LlamaAPIHandler) newDefaultLlamaRequest(username string, botname strin
 		Grammar:          "",
 		NProbs:           0,
 		MinKeep:          0,
-		CachePrompt:      true,
+		CachePrompt:      false,
 		SlotID:           0,
 		Temperature:      0.7,
 		Stop:             stopStrings,

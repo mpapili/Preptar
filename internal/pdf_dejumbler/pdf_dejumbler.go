@@ -27,6 +27,7 @@ func NewDejumbler(cfg *config.Config, infoChannel chan string) *Dejumbler {
 }
 
 func (dj *Dejumbler) dejumbleParagraph(ctx context.Context, paragraph string) error {
+	log.Println("starting to dejumble another paragraph")
 	response, err := dj.llama.MakeRequestAndDecode(
 		ctx,
 		paragraph,
@@ -37,6 +38,7 @@ func (dj *Dejumbler) dejumbleParagraph(ctx context.Context, paragraph string) er
 	if err != nil {
 		return fmt.Errorf("failed to decode scrambled PDF text : paragraph %s : error %w", paragraph, err)
 	}
+	log.Println("dejumbler finished processing another paragraph")
 	// append to file and send to info channel
 	err = fileutils.AppendNewParagraph("dejumbled-pdf.txt", response.Content)
 	if err != nil {
