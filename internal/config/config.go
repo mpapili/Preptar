@@ -8,13 +8,22 @@ type Config struct {
 	LogName       string
 	LlamaMainPath string
 	DecoderPath   string // path to model to decode PDF nonsense
+	Ports         *Ports
 	Prompts       *Prompts
 }
 
 type Prompts struct {
-	DecodePDF string
-	Questioner string
-	Answerer string
+	DecodePDF    string
+	Questioner   string
+	Answerer     string
+	PeerReviewer string
+}
+
+type Ports struct {
+	DecoderPort      string
+	QuestionerPort   string
+	AnswererPort     string
+	PeerReviewerPort string
 }
 
 func newPrompts() *Prompts {
@@ -24,16 +33,26 @@ func newPrompts() *Prompts {
 			"DECODER's task is to unscramble the text and response with a complete human-readable" +
 			"response that retains the context and information of the original text. DECODER will only " +
 			"reply with the answer as a properly-formatted Paragraph; nothing else. DECODER will ignore references" +
-			"to diagrams or figures that are not present.",
+			"to diagrams or figures (Fig) that are not present.",
 		Questioner: "This is a conversation between MIKE and you, QUESTIONER. MIKE will give you a paragraph with one or more " +
 			"bits of useful information. You will respond in the format of a question that that is answered by MIKE's paragraph. " +
 			"QUESTIONER will only ever reply with the question. MIKE only replies with paragraphs of information.",
 		Answerer: "This is a conversation between MIKE and you, ANSWERER. MIKE will give you a paragraph with one or more " +
-		"bits of useful information and follow it up with a question. ANSWERER will respond with the answer to the question using " +
-		"the information from the provided paragraph.",
+			"bits of useful information and follow it up with a question. ANSWERER will respond with the answer to the question using " +
+			"the information from the provided paragraph.",
 		PeerReviewer: "This is a conversation between MIKE and a peer reviewer named REVIEWER (you) " +
-		"who is tasked with determining if MIKE's statement are safe or unsafe. If a statement is safe, "+
-		"REVIEWER will just say 'safe'. If a statement is unsafe, reviewer will just say 'unsafe'."
+			"who is tasked with determining if MIKE's statement are safe or unsafe. If a statement is safe, " +
+			"REVIEWER will just say 'safe'. If a statement is unsafe, inappropriate, or appears to be missing context, reviewer will just say 'unsafe'. " +
+			"REVIEWER will only respond with one word at a time, that word being safe or unsafe.",
+	}
+}
+
+func newPorts() *Ports {
+	return &Ports{
+		DecoderPort:      "8080",
+		QuestionerPort:   "8080",
+		AnswererPort:     "8080",
+		PeerReviewerPort: "8080",
 	}
 }
 
@@ -43,6 +62,7 @@ func DefaultConfig() *Config {
 		LogName:       "default.log",
 		LlamaMainPath: "./main",
 		DecoderPath:   "/home/mike/Downloads/mixtral-8x7b-instruct-v0.1.Q5_K_M.gguf",
+		Ports:         newPorts(),
 		Prompts:       newPrompts(),
 	}
 	loadConfigFromCommandLine(&cfg)

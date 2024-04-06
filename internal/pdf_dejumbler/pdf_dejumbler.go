@@ -21,7 +21,7 @@ func NewDejumbler(cfg *config.Config, infoChannel chan string) *Dejumbler {
 	return &Dejumbler{
 		infoChannel: infoChannel,
 		// TODO - set port in config
-		llama:     llama.NewLlamaAPIHandler("8080"),
+		llama:     llama.NewLlamaAPIHandler(cfg.Ports.DecoderPort),
 		prePrompt: cfg.Prompts.DecodePDF,
 	}
 }

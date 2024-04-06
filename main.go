@@ -10,6 +10,7 @@ import (
 	"preptar/internal/config"
 	"preptar/internal/llama_api"
 	"preptar/internal/pdf_dejumbler"
+	"preptar/internal/fileutils"
 )
 
 func SubstringAfter(s, substr string) (string, error) {
@@ -31,6 +32,7 @@ func main() {
 	log.Println("Before starting, start the decoder llama cpp server on port 8080 and the Questioner server on 8081")
 	infoChannel := make(chan string)
 	answererChannel := make(chan string)
+	reviewerChannel := make(chan string)
 	cfg := config.DefaultConfig()
 	defer close(infoChannel)
 	defer close(answererChannel)
@@ -52,7 +54,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		questionLlama := llama.NewLlamaAPIHandler("8081") // TODO - new port to add to config
+		questionLlama := llama.NewLlamaAPIHandler(cfg.Ports.QuestionerPort) // TODO - new port to add to config
 		for {
 			paragraph := <-infoChannel
 			fmt.Printf("\nQUESTIONER: I just got work from my channel!\n%s\n", paragraph)
@@ -67,8 +69,8 @@ func main() {
 			if err != nil {
 				log.Printf("failed to generate a question and answer from paragraph : %s : %w", paragraph, err)
 			}
-			fmt.Printf("\nQUESTIONER: Got a question:\n%s", resp.Content)
-			answererChannel <- fmt.Sprintf("%s\n<QUESTION>: %s", paragraph, resp.Content)
+			fmt.Printf("\nQUESTIONER: Got a question:\n%s\n", resp.Content)
+			answererChannel <- fmt.Sprintf("%s\n<QUESTION>: %s\n", paragraph, resp.Content)
 		}
 	}()
 
@@ -76,7 +78,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		answerLlama := llama.NewLlamaAPIHandler("8081") // TODO - new port to add to config
+		answerLlama := llama.NewLlamaAPIHandler(cfg.Ports.AnswererPort) // TODO - new port to add to config
 		for {
 			prompt := <-answererChannel
 			fmt.Printf("\nANSWERER: I just got work from my channel!\n%s", prompt)
@@ -89,7 +91,7 @@ func main() {
 				"ANSWERER",
 			)
 			if err != nil {
-				log.Printf("failed to generate a question and answer from prompt : %s : %w", prompt, err)
+				log.Printf("failed to generate a question and answer from prompt : %s : %v", prompt, err)
 			}
 			fmt.Printf("\nANSWERER: Got an answer:\n%s\n", resp.Content)
 			question, err := SubstringAfter(prompt, "<QUESTION>")
@@ -98,10 +100,46 @@ func main() {
 			}
 			answer := resp.Content
 			fmt.Printf("\nANSWERER: Your final Question and Answer Combo:\nQuesiton: %s\nAnswer: %s\n\n", question, answer)
+			reviewerChannel <- fmt.Sprintf("Question: %s\nAnswer:%s", question, answer)
 		}
 	}()
 
-	// TODO - make a sanity-checker worker; the current pipeline just told me to drink ink
+	// Peer Reviewer GoRoutine
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		reviewerLlama := llama.NewLlamaAPIHandler(cfg.Ports.PeerReviewerPort) // TODO - new port to add to config
+		for {
+			questionAndAnswer := <-reviewerChannel
+			fmt.Printf("\nPeerReviewer: I just got work from my channel!\n%s", questionAndAnswer)
+			ctx := context.Background()
+			resp, err := reviewerLlama.MakeRequestAndDecode(
+				ctx,
+				questionAndAnswer,
+				cfg.Prompts.PeerReviewer,
+				"MIKE",
+				"REVIEWER",
+			)
+			if err != nil {
+				log.Printf("failed to generate a question and answer from prompt : %s : %w", questionAndAnswer, err)
+			}
+			safeDetermination := resp.Content
+			log.Println("\nPEER REVIEWER: I have determined that the question+answer combo is :", safeDetermination)
+			if len(safeDetermination) > 10 {
+				log.Printf("error - peer reviewer gave an invalid response : %s", safeDetermination)
+			} else {
+				if strings.Contains(safeDetermination, "unsafe") {
+					log.Println("Unsafe! This question/answer combo will NOT be saved")
+				} else if strings.Contains(safeDetermination, "safe") {
+					log.Println("Safe! Saving this combo")
+					err = fileutils.AppendNewParagraph("qa_combos.txt", fmt.Sprintf("%s\n", questionAndAnswer))
+					if err != nil {
+						log.Printf("failed to append QA combo to file : %w", err)
+					}
+				}
+			}
+		}
+	}()
 
 	wg.Wait()
 	close(infoChannel)
